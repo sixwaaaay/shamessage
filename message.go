@@ -14,7 +14,9 @@
 package main
 
 import (
+	"flag"
 	"github.com/sixwaaaay/shamessage/internal/config"
+	"github.com/sixwaaaay/shamessage/internal/data"
 	"github.com/sixwaaaay/shamessage/message"
 	"google.golang.org/grpc"
 	"net"
@@ -23,12 +25,21 @@ import (
 	"syscall"
 )
 
+var configFile = flag.String("f", "configs/config.yaml", "the config file")
+
 func main() {
-	c, err := config.NewConfig()
+	flag.Parse()
+	c, err := config.NewConfig(*configFile)
 	if err != nil {
 		panic(err)
 	}
-	server, err := NewServer(c)
+
+	session, err := data.CreateGoCqlSession(c)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+	server, err := NewServer(c, session)
 	if err != nil {
 		panic(err)
 	}
