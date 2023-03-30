@@ -11,28 +11,28 @@
  * limitations under the License.
  */
 
-import {check, sleep} from 'k6';
-import grpc from 'k6/net/grpc';
+import { check, sleep } from "k6";
+import grpc from "k6/net/grpc";
 
 const client = new grpc.Client();
-client.load([ '..' ], 'message.proto');
+client.load([".."], "message.proto");
 export default () => {
-  client.connect('localhost:8080', {
+  client.connect("localhost:8080", {
     // plaintext: false
-    plaintext : true,
+    plaintext: true,
   });
 
   const data = {
-    "user_id" : randomInt(1, 100000),
-    "to_user_id" : randomInt(1, 100000),
-    "action_type" : 1,
-    "content" : randomString(15),
-  }
+    user_id: randomInt(1, 100000),
+    to_user_id: randomInt(1, 100000),
+    action_type: 1,
+    content: randomString(15),
+  };
 
-  const response = client.invoke('message.MessageService/Put', data);
+  const response = client.invoke("message.MessageService/Put", data);
 
   check(response, {
-    'status is OK' : (r) => r && r.status === grpc.StatusOK,
+    "status is OK": (r) => r && r.status === grpc.StatusOK,
   });
 
   //    console.log(JSON.stringify(response.message));
@@ -41,14 +41,15 @@ export default () => {
 };
 
 // generate random int
-const randomInt =
-    (min, max) => { return Math.floor(Math.random() * (max - min + 1) + min); };
+const randomInt = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+};
 
 const characters =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 // generate random string
 const randomString = (length) => {
-  let result = '';
+  let result = "";
   const charactersLength = characters.length;
   for (let i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));

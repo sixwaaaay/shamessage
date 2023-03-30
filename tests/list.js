@@ -11,25 +11,25 @@
  * limitations under the License.
  */
 
-import {check} from 'k6';
-import grpc from 'k6/net/grpc';
+import { check } from "k6";
+import grpc from "k6/net/grpc";
 
 const client = new grpc.Client();
-client.load([ '..' ], 'message.proto');
+client.load([".."], "message.proto");
 export default () => {
-  client.connect('localhost:8080', {
-    plaintext : true,
+  client.connect("localhost:8080", {
+    plaintext: true,
   });
 
   const data = {
-    "user_id" : randomInt(1, 100000),
-    "to_user_id" : randomInt(1, 100000),
-  }
+    user_id: randomInt(1, 100000),
+    to_user_id: randomInt(1, 100000),
+  };
 
-  const response = client.invoke('message.MessageService/List', data);
+  const response = client.invoke("message.MessageService/List", data);
 
   check(response, {
-    'status is OK' : (r) => r && r.status === grpc.StatusOK,
+    "status is OK": (r) => r && r.status === grpc.StatusOK,
   });
 
   //    console.log(JSON.stringify(response.message));
@@ -38,5 +38,6 @@ export default () => {
 };
 
 // generate random int
-const randomInt =
-    (min, max) => { return Math.floor(Math.random() * (max - min + 1) + min); };
+const randomInt = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+};
