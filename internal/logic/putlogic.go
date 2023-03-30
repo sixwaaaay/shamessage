@@ -49,13 +49,16 @@ func NewPutLogic(opt PutLogicOption) *PutLogic {
 
 // Put is the logic for Put method
 func (l *PutLogic) Put(ctx context.Context, in *message.MessageActionRequest) (*message.MessageActionResponse, error) {
-	if in.UserId == 0 || in.ToUserId == 0 || in.ActionType != 1 || in.Content == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid argument")
+	if in.UserId == 0 || in.ToUserId == 0 || in.ActionType != 1 || in.Content == "" || in.UserId == in.ToUserId {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"invalid argument",
+		)
 	}
 
 	id, err := l.flake.NextID()
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "too many requests")
 	}
 
 	channel := genKey(in.UserId, in.ToUserId)
@@ -66,13 +69,13 @@ func (l *PutLogic) Put(ctx context.Context, in *message.MessageActionRequest) (*
         INSERT INTO messages (channel_id, id, user_id, to_user_id, action_type, content, created_at)
         VALUES (?,?, ?, ?, ?, ?, ?)
     `, channel, id, in.UserId, in.ToUserId, in.ActionType, in.Content, now)
-
-	if err := query.Exec(); err != nil {
-		return nil, status.Errorf(codes.Internal, "insert message failed: %v", err)
+	err = query.WithContext(ctx).Exec()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
 	resp := &message.MessageActionResponse{
-		StatusCode: 0,
+		StatusCode: OK,
 		StatusMsg:  "success",
 	}
 	return resp, nil

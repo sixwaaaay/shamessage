@@ -2,3 +2,4 @@ ListenOn: 0.0.0.0:8080
 Cluster:
   - localhost:9042
 KeySpace: messages
+Limit: 30
