@@ -1,5 +1,16 @@
+# Copyright (c) 2023 sixwaaaay
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http:www.apache.org/licenses/LICENSE-2.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 name: CI
-on: [push]
+on: [ push ]
 
 jobs:
   unit-tests:
@@ -40,3 +51,49 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           files: coverage.txt
+
+  load-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Start Scylla Container
+        run: |
+          docker run --name scylla -p 9042:9042 --hostname scylla -d scylladb/scylla --smp 1
+
+      - name: Wait for Scylla to Start
+        run: |
+          sleep 30
+
+      - name: Create Keyspace and Tables
+        run: |
+          docker exec scylla cqlsh -e "CREATE KEYSPACE messages WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'} AND durable_writes = true;"
+          docker exec scylla cqlsh -e "CREATE TABLE messages.messages (channel_id blob, id bigint, user_id bigint, to_user_id bigint, action_type int, content text, created_at timestamp, PRIMARY KEY (channel_id, id));"
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.19
+
+      - name: Set up wire
+        run: |
+          go install github.com/google/wire/cmd/wire@latest
+          wire
+      - name: Run Application Background
+        run: |
+          go build -ldflags="-s -w"
+          ./shamessage &
+
+      - name: Install k6
+        run: |
+          wget https://github.com/grafana/k6/releases/download/v0.43.1/k6-v0.43.1-linux-amd64.tar.gz
+          tar --strip-components 1 -xvf k6-v0.43.1-linux-amd64.tar.gz
+
+      - name: Run k6 load test for put method
+        run: |
+          ./k6 run ./tests/put.js --vus 20 --duration 5s
+
+      - name: Run k6 load test for list method
+        run: |
+          ./k6 run ./tests/list.js --vus 20 --duration 5s
