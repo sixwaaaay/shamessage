@@ -23,6 +23,7 @@ type Config struct {
 	ListenOn string   `yaml:"listen_on"` // Listen on address
 	Cluster  []string `yaml:"cluster"`   // Cassandra cluster addresses
 	KeySpace string   `yaml:"keyspace"`  // Cassandra keyspace
+	Limit    int64    // query limit
 }
 
 // NewConfig parses the config file and returns a Config struct

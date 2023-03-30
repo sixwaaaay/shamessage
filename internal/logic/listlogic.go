@@ -16,30 +16,72 @@ package logic
 
 import (
 	"context"
-
+	"github.com/gocql/gocql"
 	"github.com/sixwaaaay/shamessage/internal/config"
 	"github.com/sixwaaaay/shamessage/message"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // ListLogic is the logic for List method implementation
 type ListLogic struct {
-	conf *config.Config
+	conf    *config.Config
+	session *gocql.Session
 }
 
 // ListLogicOption is the parameters for ListLogic
 type ListLogicOption struct {
-	Config *config.Config
+	Config  *config.Config
+	Session *gocql.Session
 }
 
 // NewListLogic creates a new ListLogic
 func NewListLogic(opt ListLogicOption) *ListLogic {
 	return &ListLogic{
-		conf: opt.Config,
+		conf:    opt.Config,
+		session: opt.Session,
 	}
 }
 
 // List is the logic for List method
-func (l *ListLogic) List(ctx context.Context, in *message.MessageListRequest) (*message.MessageListResponse, error) {
+func (l *ListLogic) List(ctx context.Context, req *message.MessageListRequest) (*message.MessageListResponse, error) {
+	if req.UserId == 0 || req.ToUserId == 0 || req.UserId == req.ToUserId {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"invalid argument",
+		)
+	}
 
-	return &message.MessageListResponse{}, nil
+	var partitionKey = genKey(req.UserId, req.ToUserId)
+	var (
+		messageList []*message.Message
+		stmt        = l.session.Query(`
+		SELECT id, to_user_id, user_id, content, created_at
+		FROM messages
+		WHERE channel_id = ? and id > ?
+		LIMIT ?
+		    `,
+			partitionKey, req.PreMsgTime, l.conf.Limit)
+	)
+
+	iterator := stmt.WithContext(ctx).Iter()
+
+	for {
+		m := &message.Message{}
+		if iterator.Scan(&m.Id, &m.ToUserId, &m.FromUserId, &m.Content, &m.CreateTime) {
+			messageList = append(messageList, m)
+		} else {
+			break
+		}
+	}
+	err := iterator.Close()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "internal error")
+	}
+
+	return &message.MessageListResponse{
+		StatusCode:  OK,
+		StatusMsg:   "OK",
+		MessageList: messageList,
+	}, nil
 }
