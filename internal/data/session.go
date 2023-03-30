@@ -1,5 +1,3 @@
-//go:build wireinject
-
 /*
  * Copyright (c) 2023 sixwaaaay
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,25 +11,23 @@
  * limitations under the License.
  */
 
-package main
+package data
 
 import (
 	"github.com/gocql/gocql"
-	"github.com/google/wire"
 	"github.com/sixwaaaay/shamessage/internal/config"
-	"github.com/sixwaaaay/shamessage/internal/logic"
-	"github.com/sixwaaaay/shamessage/internal/server"
 )
 
-// NewServer creates a new server.
-func NewServer(c *config.Config, session *gocql.Session) (*server.MessageServiceServer, error) {
-	wire.Build(
-		server.NewMessageServiceServer,
-		wire.Struct(new(server.ServerOption), "*"),
-		logic.NewListLogic,
-		wire.Struct(new(logic.ListLogicOption), "*"),
-		logic.NewPutLogic,
-		wire.Struct(new(logic.PutLogicOption), "*"),
-	)
-	return nil, nil
+// CreateGoCqlSession creates a new gocql session
+func CreateGoCqlSession(conf *config.Config) (*gocql.Session, error) {
+	// create cassandra cluster config
+	cluster := gocql.NewCluster(conf.Cluster...)
+	cluster.Keyspace = conf.KeySpace
+	// create cassandra session
+	session, err := cluster.CreateSession()
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
 }

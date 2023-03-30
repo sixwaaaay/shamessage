@@ -15,21 +15,19 @@
 package config
 
 import (
-	"flag"
 	"github.com/spf13/viper"
 )
 
 // Config is the config struct
 type Config struct {
-	ListenOn string `yaml:"listen_on"`
+	ListenOn string   `yaml:"listen_on"` // Listen on address
+	Cluster  []string `yaml:"cluster"`   // Cassandra cluster addresses
+	KeySpace string   `yaml:"keyspace"`  // Cassandra keyspace
 }
 
-var configFile = flag.String("f", "configs/config.yaml", "the config file")
-
 // NewConfig parses the config file and returns a Config struct
-func NewConfig() (*Config, error) {
-	flag.Parse()
-	viper.SetConfigFile(*configFile)
+func NewConfig(path string) (*Config, error) {
+	viper.SetConfigFile(path)
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 	var config Config

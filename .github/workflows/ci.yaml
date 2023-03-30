@@ -1,0 +1,42 @@
+name: CI
+on: [push]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Start Scylla Container
+        run: |
+          docker run --name scylla -p 9042:9042 --hostname scylla -d scylladb/scylla --smp 1
+
+      - name: Wait for Scylla to Start
+        run: |
+          sleep 30
+
+      - name: Create Keyspace and Tables
+        run: |
+          docker exec scylla cqlsh -e "CREATE KEYSPACE messages WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'} AND durable_writes = true;"
+          docker exec scylla cqlsh -e "CREATE TABLE messages.messages (channel_id blob, id bigint, user_id bigint, to_user_id bigint, action_type int, content text, created_at timestamp, PRIMARY KEY (channel_id, id));"
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.19
+
+      - name: Set up wire
+        run: |
+          go install github.com/google/wire/cmd/wire@latest
+          wire
+
+      - name: Go Code Test
+        run: |
+          go mod tidy
+          go test ./... -race -coverprofile=coverage.txt -covermode=atomic
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.txt

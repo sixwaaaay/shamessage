@@ -1,5 +1,3 @@
-//go:build wireinject
-
 /*
  * Copyright (c) 2023 sixwaaaay
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,25 +11,26 @@
  * limitations under the License.
  */
 
-package main
+package logic
 
 import (
 	"github.com/gocql/gocql"
-	"github.com/google/wire"
 	"github.com/sixwaaaay/shamessage/internal/config"
-	"github.com/sixwaaaay/shamessage/internal/logic"
-	"github.com/sixwaaaay/shamessage/internal/server"
+	"github.com/sixwaaaay/shamessage/internal/data"
+	"testing"
 )
 
-// NewServer creates a new server.
-func NewServer(c *config.Config, session *gocql.Session) (*server.MessageServiceServer, error) {
-	wire.Build(
-		server.NewMessageServiceServer,
-		wire.Struct(new(server.ServerOption), "*"),
-		logic.NewListLogic,
-		wire.Struct(new(logic.ListLogicOption), "*"),
-		logic.NewPutLogic,
-		wire.Struct(new(logic.PutLogicOption), "*"),
-	)
-	return nil, nil
+var session *gocql.Session
+
+func TestMain(m *testing.M) {
+	c := config.Config{}
+	c.Cluster = []string{"localhost:9042"}
+	c.KeySpace = "messages"
+	var err error
+	session, err = data.CreateGoCqlSession(&c)
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+	m.Run()
 }

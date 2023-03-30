@@ -3,6 +3,12 @@ engines:
     exclude_paths:
       - "message/*"
       - "internal/server/*"
+      - "**/*_test.go"
+      - "**/*_mock.go"
+      - "**/*_gen.go"
 exclude_paths:
   - "message/**"
   - "internal/server/*"
+  - "**/*_test.go"
+  - "**/*_mock.go"
+  - "**/*_gen.go"
