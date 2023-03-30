@@ -11,48 +11,48 @@
  * limitations under the License.
  */
 
-import grpc from 'k6/net/grpc';
-import { check, sleep } from 'k6';
+import { check, sleep } from "k6";
+import grpc from "k6/net/grpc";
 
 const client = new grpc.Client();
-client.load(['..'], 'message.proto');
+client.load([".."], "message.proto");
 export default () => {
-    client.connect('localhost:8080', {
-        // plaintext: false
-        plaintext: true,
-    });
+  client.connect("localhost:8080", {
+    // plaintext: false
+    plaintext: true,
+  });
 
-    const data = {
-        "user_id": randomInt(1, 100000),
-        "to_user_id": randomInt(1, 100000),
-        "action_type": 1,
-        "content": randomString(15),
-    }
+  const data = {
+    user_id: randomInt(1, 100000),
+    to_user_id: randomInt(1, 100000),
+    action_type: 1,
+    content: randomString(15),
+  };
 
-    const response = client.invoke('message.MessageService/Put', data);
+  const response = client.invoke("message.MessageService/Put", data);
 
-    check(response, {
-        'status is OK': (r) => r && r.status === grpc.StatusOK,
-    });
+  check(response, {
+    "status is OK": (r) => r && r.status === grpc.StatusOK,
+  });
 
-//    console.log(JSON.stringify(response.message));
+  //    console.log(JSON.stringify(response.message));
 
-    client.close();
+  client.close();
 };
-
 
 // generate random int
 const randomInt = (min, max) => {
-    return Math.floor(Math.random() * (max - min + 1) + min);
+  return Math.floor(Math.random() * (max - min + 1) + min);
 };
 
-const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const characters =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 // generate random string
 const randomString = (length) => {
-    let result = '';
-    const charactersLength = characters.length;
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
+  let result = "";
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
 };
