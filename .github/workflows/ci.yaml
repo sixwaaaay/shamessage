@@ -10,8 +10,19 @@
 # limitations under the License.
 #
 name: CI
-on: [ push ]
-
+on:
+  push:
+    branches:
+      - '*'
+    tags:
+      - ''
+  pull_request:
+    branches:
+      - '*'
+    types:
+      - opened
+      - synchronize
+      - reopened
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
