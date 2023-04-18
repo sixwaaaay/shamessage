@@ -61,7 +61,7 @@ func (l *ListLogic) List(ctx context.Context, req *message.MessageListRequest) (
 		WHERE channel_id = ? and id > ?
 		LIMIT ?
 		    `,
-			partitionKey, req.PreMsgTime, l.conf.Limit)
+			partitionKey, req.Token, l.conf.Limit)
 	)
 
 	iterator := stmt.WithContext(ctx).Iter()
