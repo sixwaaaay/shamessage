@@ -13,7 +13,17 @@
 
 import { check } from "k6";
 import grpc from "k6/net/grpc";
-
+export let options = {
+  thresholds: {
+    http_req_failed: ['rate<0.01'], // http errors should be less than 1%
+    http_req_duration: ['p(95)<200'], // 95% of requests should be below 200ms
+  },
+  stages: [
+    { duration: '5s', target: 100 }, // simulate ramp-up of traffic from 1 to 100 users over 5 minutes.
+    { duration: '25s', target: 100 }, // stay at 100 users for 10 minutes
+    { duration: '5s', target: 0 }, // ramp-down to 0 users
+  ],
+}
 const client = new grpc.Client();
 client.load([".."], "message.proto");
 export default () => {
