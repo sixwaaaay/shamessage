@@ -3,7 +3,7 @@ module github.com/sixwaaaay/shamessage
 go 1.19
 
 require (
-	github.com/gocql/gocql v1.3.2
+	github.com/gocql/gocql v1.4.0
 	github.com/google/wire v0.5.0
 	github.com/sony/sonyflake v1.1.0
 	github.com/spf13/viper v1.15.0
