@@ -8,7 +8,7 @@ require (
 	github.com/sony/sonyflake v1.1.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
-	google.golang.org/grpc v1.55.0
+	google.golang.org/grpc v1.56.2
 	google.golang.org/protobuf v1.30.0
 )
 
